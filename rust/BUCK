@@ -1,0 +1,19 @@
+# Build Rust library for FFI
+# Use the [staticlib] subtarget to get C-compatible static library
+rust_library(
+    name = "core",
+    srcs = glob(["src/**/*.rs"]),
+    crate_root = "src/lib.rs",
+    edition = "2024",
+    visibility = ["PUBLIC"],
+)
+
+# Generate C header from Rust using cbindgen
+genrule(
+    name = "cbindgen_headers",
+    srcs = glob(["src/**/*.rs", "cbindgen.toml", "Cargo.toml", "Cargo.lock"]),
+    out = "core.h",
+    bash = "cd $SRCDIR && cbindgen --config cbindgen.toml --crate core --lang c --output $OUT",
+    cmd_exe = "cd %SRCDIR% && cbindgen --config cbindgen.toml --crate core --lang c --output %OUT%",
+    visibility = ["PUBLIC"],
+)

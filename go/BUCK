@@ -1,0 +1,27 @@
+# Build Go binary with CGO linking to Rust
+# Note: Using genrule because bundled prelude's go_binary has incomplete CGO support
+# (go_toolchain.cxx_compiler_flags is None, causing stdlib build to fail)
+genrule(
+    name = "app",
+    srcs = glob(["**/*.go"]) + ["//rust:core[staticlib]", "//rust:cbindgen_headers"],
+    out = "app",
+    bash = """
+        set -e
+        # Copy Rust artifacts to output directory
+        mkdir -p $OUT.dir/rust
+        cp $(location //rust:cbindgen_headers) $OUT.dir/rust/core.h
+        cp $(location //rust:core[staticlib]) $OUT.dir/rust/libcore.a
+
+        # Get absolute path to artifacts
+        RUST_DIR=`cd $OUT.dir/rust && pwd`
+
+        # Build Go binary with CGO
+        export CGO_ENABLED=1
+        export CGO_CFLAGS="-I$RUST_DIR"
+        export CGO_LDFLAGS="-L$RUST_DIR -lcore"
+        cd $SRCDIR && go build -o $OUT .
+        chmod +x $OUT
+    """,
+    executable = True,
+    visibility = ["PUBLIC"],
+)
