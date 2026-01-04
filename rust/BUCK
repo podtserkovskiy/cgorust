@@ -1,5 +1,4 @@
 # Build Rust library for FFI
-# Use the [staticlib] subtarget to get C-compatible static library
 rust_library(
     name = "core",
     srcs = glob(["src/**/*.rs"]),
@@ -15,5 +14,17 @@ genrule(
     out = "core.h",
     bash = "cd $SRCDIR && cbindgen --config cbindgen.toml --crate core --lang c --output $OUT",
     cmd_exe = "cd %SRCDIR% && cbindgen --config cbindgen.toml --crate core --lang c --output %OUT%",
+    visibility = ["PUBLIC"],
+)
+
+# Expose the Rust library as a C-compatible prebuilt library
+prebuilt_cxx_library(
+    name = 'cbindgen_core',
+    soname = 'libcore.so',
+    static_lib = ':core[staticlib]',
+    shared_lib = ':core[cdylib]',
+    exported_headers = [
+        ':cbindgen_headers',
+    ],
     visibility = ["PUBLIC"],
 )

@@ -1,6 +1,6 @@
 package core
 
-// #include "core.h"
+// #include "rust/core.h"
 import "C"
 
 // Add wraps the Rust add function
